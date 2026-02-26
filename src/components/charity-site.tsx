@@ -449,7 +449,7 @@ export default function CharitySite() {
                 />
               </span>
               <p className="text-lg font-semibold tracking-tight text-orange-950 sm:text-xl">{t.siteName}</p>
-              <span className="running-mantra-container hidden sm:inline-flex" aria-label="Om agatheesaya namaha">
+              <span className="running-mantra-container inline-flex" aria-label="Om agatheesaya namaha">
                 <span className="running-mantra-track">Om agatheesaya namaha • Om agatheesaya namaha • </span>
               </span>
             </div>
