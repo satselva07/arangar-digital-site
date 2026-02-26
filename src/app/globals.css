@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Segoe UI", Arial, Helvetica, sans-serif;
+  --font-mono: Consolas, "Courier New", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.running-mantra-container {
+  width: 210px;
+  overflow: hidden;
+  border: 1px solid #d4d4d8;
+  border-radius: 9999px;
+  background: #f8fafc;
+  padding: 0.125rem 0.5rem;
+}
+
+.running-mantra-track {
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: #3f3f46;
+  display: inline-block;
+  padding-left: 100%;
+  animation: mantra-marquee 12s linear infinite;
+}
+
+@keyframes mantra-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
