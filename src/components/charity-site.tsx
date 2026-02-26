@@ -10,6 +10,9 @@ type ChatMessage = {
 
 type Language = "en" | "ta";
 const LANGUAGE_STORAGE_KEY = "arangar-language";
+const NEXT_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
+const withBasePath = (path: string) => `${NEXT_BASE_PATH}${path}`;
 
 const gallerySlides = [
   {
@@ -438,7 +441,7 @@ export default function CharitySite() {
             <div className="flex items-center gap-2">
               <span className="relative h-9 w-9 overflow-hidden rounded-full border border-amber-300 shadow-sm">
                 <Image
-                  src="/gallery/Arangar_Photo.jpg"
+                  src={withBasePath("/gallery/Arangar_Photo.jpg")}
                   alt="Arangar Trust Icon"
                   fill
                   sizes="32px"
@@ -545,7 +548,7 @@ export default function CharitySite() {
                   }`}
                 >
                   <Image
-                    src={slide.src}
+                    src={withBasePath(slide.src)}
                     alt={slide.caption[language]}
                     fill
                     sizes="(max-width: 1024px) 100vw, 1024px"
