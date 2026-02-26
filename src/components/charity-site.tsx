@@ -69,6 +69,12 @@ const gallerySlides = [
 const content = {
   en: {
     siteName: "Arangar Digital Trust",
+    mantras: [
+      "Om agatheesaya namaha",
+      "Om Arangar Potri",
+      "Om Muruga Potri",
+      "Arut perum jothi arut perum jothi thani perum karunai arut perum jothi",
+    ],
     languageLabel: "Language",
     languageEnglish: "English",
     languageTamil: "Tamil",
@@ -137,6 +143,9 @@ const content = {
     upiId: "arangardigitaltrust@upi",
     youtubeHandle: "youtube.com/@arangardigitaltrust",
     twitterHandle: "x.com/arangardigitaltrust",
+    reachUs: "Reach Us",
+    omMute: "Mute Om Chanting",
+    omUnmute: "Unmute Om Chanting",
     chatOpen: "Chat with Trust Assistant",
     chatTitle: "Trust Assistant",
     chatClose: "Close",
@@ -154,6 +163,12 @@ const content = {
   },
   ta: {
     siteName: "அரங்கர் டிஜிட்டல் அறக்கட்டளை",
+    mantras: [
+      "ஓம் அகத்தீசாய நமஹ",
+      "ஓம் அரங்கர் போற்றி",
+      "ஓம் முருகா போற்றி",
+      "அருட்பெருஞ் ஜோதி அருட்பெருஞ் ஜோதி தனிப்பெரும் கருணை அருட்பெருஞ் ஜோதி",
+    ],
     languageLabel: "மொழி",
     languageEnglish: "ஆங்கிலம்",
     languageTamil: "தமிழ்",
@@ -222,6 +237,9 @@ const content = {
     upiId: "arangardigitaltrust@upi",
     youtubeHandle: "youtube.com/@arangardigitaltrust",
     twitterHandle: "x.com/arangardigitaltrust",
+    reachUs: "எங்களை அணுக",
+    omMute: "ஓம் ஜபத்தை மவுனப்படுத்தவும்",
+    omUnmute: "ஓம் ஜபத்தை ஒலிக்கச் செய்யவும்",
     chatOpen: "அறக்கட்டளை உதவியாளருடன் உரையாடவும்",
     chatTitle: "அறக்கட்டளை உதவியாளர்",
     chatClose: "மூடு",
@@ -247,15 +265,19 @@ export default function CharitySite() {
   const isStaticMode = process.env.NEXT_PUBLIC_STATIC_MODE === "true";
   const [language, setLanguage] = useState<Language>("en");
   const t = content[language];
+  const mantraText = `${t.mantras.join(" • ")} • ${t.mantras.join(" • ")} •`;
+  const mantraAria = t.mantras.join(". ");
   const [bookingStatus, setBookingStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isOmMuted, setIsOmMuted] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([{ role: "bot", text: content.en.chatInit }]);
   const [chatInput, setChatInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [isArrowHovering, setIsArrowHovering] = useState(false);
   const autoplayIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const omAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const storedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
@@ -270,6 +292,28 @@ export default function CharitySite() {
     setMessages([{ role: "bot", text: content[language].chatInit }]);
     setChatInput("");
   }, [language]);
+
+  useEffect(() => {
+    const audioElement = omAudioRef.current;
+    if (!audioElement) {
+      return;
+    }
+
+    audioElement.volume = 0.4;
+    audioElement.muted = isOmMuted;
+    audioElement
+      .play()
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const audioElement = omAudioRef.current;
+    if (!audioElement) {
+      return;
+    }
+
+    audioElement.muted = isOmMuted;
+  }, [isOmMuted]);
 
   useEffect(() => {
     if (autoplayIntervalRef.current) {
@@ -433,6 +477,22 @@ export default function CharitySite() {
     }
   };
 
+  const toggleOmAudio = async () => {
+    const audioElement = omAudioRef.current;
+    if (!audioElement) {
+      return;
+    }
+
+    try {
+      if (audioElement.paused) {
+        await audioElement.play();
+      }
+      setIsOmMuted((previous) => !previous);
+    } catch {
+      
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,theme(colors.amber.100),theme(colors.orange.50)_38%,theme(colors.emerald.50)_100%)] text-foreground">
       <header className="sticky top-0 z-30 border-b border-white/60 bg-white/70 shadow-[0_8px_30px_rgb(15_23_42/0.06)] backdrop-blur-xl">
@@ -449,8 +509,11 @@ export default function CharitySite() {
                 />
               </span>
               <p className="text-lg font-semibold tracking-tight text-orange-950 sm:text-xl">{t.siteName}</p>
-              <span className="running-mantra-container inline-flex" aria-label="Om agatheesaya namaha">
-                <span className="running-mantra-track">Om agatheesaya namaha • Om agatheesaya namaha • </span>
+              <span
+                className="running-mantra-container inline-flex"
+                aria-label={mantraAria}
+              >
+                <span className="running-mantra-track">{mantraText}</span>
               </span>
             </div>
             <label className="flex items-center gap-2 text-sm text-orange-900">
@@ -723,8 +786,75 @@ export default function CharitySite() {
           <p className="text-lg font-semibold tracking-wide">{t.siteName}</p>
           <p className="text-sm font-medium text-orange-50">Annadhanam • Compassion • Service to Humanity</p>
           <p className="text-xs text-orange-100/90">Built for food donation, volunteering, and community care.</p>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-orange-50">
+            <p className="text-sm font-semibold">{t.reachUs}</p>
+            <a
+              href="tel:+919363616263"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/20 transition hover:bg-white/30"
+              aria-label="Phone"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
+                <path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1-.24 11.36 11.36 0 0 0 3.58.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.49a1 1 0 0 1 1 1 11.36 11.36 0 0 0 .57 3.58 1 1 0 0 1-.24 1l-2.2 2.21Z" />
+              </svg>
+            </a>
+            <a
+              href="https://wa.me/919363616263"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/20 transition hover:bg-white/30"
+              aria-label="WhatsApp"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
+                <path d="M20.52 3.48A11.84 11.84 0 0 0 12.07 0C5.61 0 .34 5.26.34 11.73c0 2.07.54 4.09 1.57 5.88L0 24l6.58-1.86a11.69 11.69 0 0 0 5.48 1.39h.01c6.46 0 11.73-5.26 11.73-11.73 0-3.13-1.22-6.08-3.48-8.32Zm-8.45 18.1h-.01a9.7 9.7 0 0 1-4.95-1.35l-.35-.21-3.9 1.1 1.04-3.8-.23-.39a9.76 9.76 0 0 1-1.5-5.2c0-5.38 4.38-9.76 9.77-9.76 2.6 0 5.05 1.01 6.89 2.86a9.67 9.67 0 0 1 2.86 6.9c0 5.39-4.39 9.77-9.77 9.77Zm5.36-7.34c-.29-.15-1.73-.85-2-.94-.27-.1-.46-.15-.66.14-.19.29-.75.94-.92 1.13-.17.2-.34.22-.63.08-.29-.15-1.23-.45-2.34-1.42-.86-.77-1.45-1.72-1.62-2.01-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.14-.17.19-.29.29-.48.1-.2.05-.37-.02-.51-.08-.15-.66-1.59-.91-2.17-.24-.57-.48-.49-.66-.5h-.56c-.2 0-.51.08-.78.37-.27.29-1.03 1.01-1.03 2.46 0 1.45 1.06 2.86 1.2 3.06.15.19 2.08 3.18 5.03 4.46.7.3 1.25.49 1.68.62.71.22 1.35.19 1.85.12.57-.09 1.73-.71 1.97-1.39.25-.69.25-1.28.17-1.4-.07-.12-.27-.2-.56-.35Z" />
+              </svg>
+            </a>
+          </div>
         </div>
       </footer>
+
+      <div className="fixed bottom-24 right-4 z-20 flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={() => void toggleOmAudio()}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-amber-600 text-white shadow-lg transition hover:scale-[1.04] hover:bg-amber-700"
+          aria-label={isOmMuted ? t.omUnmute : t.omMute}
+          title={isOmMuted ? t.omUnmute : t.omMute}
+        >
+          {isOmMuted ? (
+            <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
+              <path d="M5 10v4h3l4 4V6L8 10H5Zm11.59 2 2.7-2.7-1.42-1.42L15.17 10.6l-2.7-2.72-1.42 1.42 2.71 2.7-2.71 2.7 1.42 1.42 2.7-2.71 2.7 2.71 1.42-1.42-2.7-2.7Z" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
+              <path d="M5 10v4h3l4 4V6L8 10H5Zm10.5 2a3.5 3.5 0 0 0-2.5-3.35v6.7A3.5 3.5 0 0 0 15.5 12Zm0-7v2.06a5.5 5.5 0 0 1 0 9.88V19a7.5 7.5 0 0 0 0-14Z" />
+            </svg>
+          )}
+        </button>
+        <a
+          href="tel:+919363616263"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-emerald-700 text-white shadow-lg transition hover:scale-[1.04] hover:bg-emerald-800"
+          aria-label="Phone"
+          title="Phone"
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
+            <path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1-.24 11.36 11.36 0 0 0 3.58.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.49a1 1 0 0 1 1 1 11.36 11.36 0 0 0 .57 3.58 1 1 0 0 1-.24 1l-2.2 2.21Z" />
+          </svg>
+        </a>
+        <a
+          href="https://wa.me/919363616263"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-green-600 text-white shadow-lg transition hover:scale-[1.04] hover:bg-green-700"
+          aria-label="WhatsApp"
+          title="WhatsApp"
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
+            <path d="M20.52 3.48A11.84 11.84 0 0 0 12.07 0C5.61 0 .34 5.26.34 11.73c0 2.07.54 4.09 1.57 5.88L0 24l6.58-1.86a11.69 11.69 0 0 0 5.48 1.39h.01c6.46 0 11.73-5.26 11.73-11.73 0-3.13-1.22-6.08-3.48-8.32Zm-8.45 18.1h-.01a9.7 9.7 0 0 1-4.95-1.35l-.35-.21-3.9 1.1 1.04-3.8-.23-.39a9.76 9.76 0 0 1-1.5-5.2c0-5.38 4.38-9.76 9.77-9.76 2.6 0 5.05 1.01 6.89 2.86a9.67 9.67 0 0 1 2.86 6.9c0 5.39-4.39 9.77-9.77 9.77Zm5.36-7.34c-.29-.15-1.73-.85-2-.94-.27-.1-.46-.15-.66.14-.19.29-.75.94-.92 1.13-.17.2-.34.22-.63.08-.29-.15-1.23-.45-2.34-1.42-.86-.77-1.45-1.72-1.62-2.01-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.14-.17.19-.29.29-.48.1-.2.05-.37-.02-.51-.08-.15-.66-1.59-.91-2.17-.24-.57-.48-.49-.66-.5h-.56c-.2 0-.51.08-.78.37-.27.29-1.03 1.01-1.03 2.46 0 1.45 1.06 2.86 1.2 3.06.15.19 2.08 3.18 5.03 4.46.7.3 1.25.49 1.68.62.71.22 1.35.19 1.85.12.57-.09 1.73-.71 1.97-1.39.25-.69.25-1.28.17-1.4-.07-.12-.27-.2-.56-.35Z" />
+          </svg>
+        </a>
+      </div>
+
+      <audio ref={omAudioRef} loop preload="auto" src={withBasePath("/audio/om-chanting.mp4")} />
 
       <div className="fixed bottom-4 right-4 z-20 w-80 max-w-[calc(100%-2rem)]">
         {isChatOpen ? (
