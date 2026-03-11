@@ -5,7 +5,13 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const fromNumber = process.env.TWILIO_FROM_NUMBER;
 const notifyPhone = process.env.NOTIFY_PHONE ?? "+919363616263";
 
-const isSmsConfigured = Boolean(accountSid && authToken && fromNumber && notifyPhone);
+function isRealConfig(value?: string) {
+  return Boolean(value && !value.includes("your-") && !value.includes("xxxxxxxxxx"));
+}
+
+const isSmsConfigured = Boolean(
+  isRealConfig(accountSid) && isRealConfig(authToken) && isRealConfig(fromNumber) && isRealConfig(notifyPhone)
+);
 
 export function canSendSms() {
   return isSmsConfigured;

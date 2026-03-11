@@ -1,68 +1,57 @@
 import { NextResponse } from "next/server";
-import { canSendEmail, sendNotificationEmail } from "@/lib/mailer";
-import { canSendSms, sendNotificationSms } from "@/lib/sms";
+import { prisma } from "@/lib/prisma";
+import { notifyEnquiry } from "@/lib/notifications";
+import { feedbackSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as {
-      name?: string;
-      feedback?: string;
-      language?: "en" | "ta";
-    };
-
-    const name = body.name?.trim() ?? "";
-    const feedback = body.feedback?.trim() ?? "";
-
-    if (!name || !feedback) {
-      return NextResponse.json({ ok: false, message: "Missing required feedback fields." }, { status: 400 });
-    }
-
-    const canEmail = canSendEmail();
-    const canSms = canSendSms();
-
-    if (!canEmail && !canSms) {
+    const parsed = feedbackSchema.safeParse(await request.json());
+    if (!parsed.success) {
       return NextResponse.json(
         {
           ok: false,
-          message: "No notification service is configured. Set SMTP and/or Twilio env vars.",
+          message: "Invalid enquiry payload.",
+          issues: parsed.error.flatten(),
         },
-        { status: 500 }
+        { status: 400 }
       );
     }
 
-    const emailPayload = {
-      subject: `New Website Feedback - ${name}`,
-      text: `New feedback received.\n\nName: ${name}\nFeedback:\n${feedback}`,
-      html: `<h2>New Website Feedback</h2><p><strong>Name:</strong> ${name}</p><p><strong>Feedback:</strong></p><p>${feedback.replace(/\n/g, "<br/>")}</p>`,
-    };
-    const smsBody = `New Feedback\nName: ${name}\nFeedback: ${feedback}`;
+    const { name, feedback, language } = parsed.data;
 
-    let delivered = false;
+    const createdEnquiry = await prisma.enquiry.create({
+      data: {
+        name,
+        message: feedback,
+        language,
+        category: "feedback",
+      },
+    });
 
-    if (canEmail) {
-      try {
-        await sendNotificationEmail(emailPayload);
-        delivered = true;
-      } catch {
-        
-      }
-    }
+    const notification = await notifyEnquiry({
+      id: createdEnquiry.id,
+      name,
+      message: feedback,
+    });
 
-    if (canSms) {
-      try {
-        await sendNotificationSms(smsBody);
-        delivered = true;
-      } catch {
-        
-      }
-    }
+    await prisma.enquiry.update({
+      where: { id: createdEnquiry.id },
+      data: {
+        notificationStatus: notification.status,
+        notificationChannels: notification.channels,
+        notificationError: notification.error,
+        notificationLastTriedAt: new Date(),
+      },
+    });
 
-    if (!delivered) {
-      return NextResponse.json({ ok: false, message: "Unable to send notification right now." }, { status: 500 });
-    }
-
-    return NextResponse.json({ ok: true });
-  } catch {
+    return NextResponse.json({
+      ok: true,
+      enquiryId: createdEnquiry.id,
+      notificationDelivered: notification.delivered,
+      notificationStatus: notification.status,
+    });
+  } catch (error) {
+    console.error("Feedback API error:", error);
     return NextResponse.json({ ok: false, message: "Unable to submit feedback right now." }, { status: 500 });
   }
 }

@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum RequestStatus {
+  NEW
+  CONTACTED
+  ASSIGNED
+  COMPLETED
+  CLOSED
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  role           UserRole  @default(USER)
+  passwordHash   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  accounts       Account[]
+  sessions       Session[]
+  adminActions   AdminAction[]
+  managedFaqs    Faq[]     @relation("FaqUpdatedBy")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model VolunteerBooking {
+  id          String        @id @default(cuid())
+  name        String
+  phone       String
+  date        DateTime
+  slot        String
+  language    String        @default("en")
+  notes       String?
+  status      RequestStatus @default(NEW)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  assignedTo  String?
+  notificationStatus      String   @default("PENDING")
+  notificationChannels    String[]
+  notificationLastTriedAt DateTime?
+  notificationError       String?
+
+  @@index([status, date])
+}
+
+model Enquiry {
+  id          String        @id @default(cuid())
+  name        String
+  phone       String?
+  email       String?
+  category    String        @default("general")
+  message     String
+  language    String        @default("en")
+  source      String        @default("website")
+  status      RequestStatus @default(NEW)
+  notificationStatus      String   @default("PENDING")
+  notificationChannels    String[]
+  notificationLastTriedAt DateTime?
+  notificationError       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model Faq {
+  id           String   @id @default(cuid())
+  question     String
+  answer       String
+  language     String   @default("en")
+  tags         String[]
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  updatedById  String?
+
+  updatedBy User? @relation("FaqUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([language, isActive])
+}
+
+model ChatLog {
+  id            String   @id @default(cuid())
+  sessionId     String?
+  language      String   @default("en")
+  userMessage   String
+  botResponse   String
+  matchedFaqId  String?
+  confidence    Float?
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model AdminAction {
+  id          String   @id @default(cuid())
+  entityType  String
+  entityId    String
+  action      String
+  details     String?
+  createdAt   DateTime @default(now())
+  actionById  String?
+
+  actionBy User? @relation(fields: [actionById], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+}
+
+model AdminOtpCode {
+  id          String   @id @default(cuid())
+  codeHash    String
+  expiresAt   DateTime
+  usedAt      DateTime?
+  attempts    Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt, expiresAt])
+}

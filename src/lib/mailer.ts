@@ -6,7 +6,13 @@ const smtpUser = process.env.SMTP_USER;
 const smtpPass = process.env.SMTP_PASS;
 const smtpFrom = process.env.SMTP_FROM ?? smtpUser;
 
-const isMailerConfigured = Boolean(smtpHost && smtpUser && smtpPass && smtpFrom);
+function isRealConfig(value?: string) {
+  return Boolean(value && !value.includes("your-") && !value.includes("replace-with"));
+}
+
+const isMailerConfigured = Boolean(
+  isRealConfig(smtpHost) && isRealConfig(smtpUser) && isRealConfig(smtpPass) && isRealConfig(smtpFrom)
+);
 
 export function canSendEmail() {
   return isMailerConfigured;

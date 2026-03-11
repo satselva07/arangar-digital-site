@@ -2,6 +2,15 @@
 
 Production-ready Next.js website for annadhanam, volunteer booking, feedback collection, chatbot support, and notification delivery (Email + optional SMS).
 
+## Dynamic Backend (Phase 1 and 2)
+
+This project now includes:
+
+- Prisma + PostgreSQL persistence for volunteer bookings, enquiries, FAQ data, and chat logs.
+- NextAuth admin authentication with role-based route protection.
+- Protected admin dashboard at `/admin` (not available to public users).
+- Notification status tracking (`SENT`/`FAILED`/`SKIPPED`) with retry actions in admin.
+
 ## Local Development
 
 1. Install dependencies:
@@ -18,13 +27,45 @@ cp .env.example .env.local
 
 3. Fill `.env.local` values.
 
-4. Start dev server:
+4. Generate Prisma client:
+
+```bash
+npx prisma generate
+```
+
+5. Run database migrations:
+
+```bash
+npx prisma migrate dev --name init
+```
+
+6. Start dev server:
 
 ```bash
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000).
+7. Open [http://localhost:3000](http://localhost:3000).
+
+## Admin Access
+
+- Login URL: `/login`
+- Dashboard URL: `/admin`
+- Credentials come from `.env.local`:
+	- `ADMIN_USERNAME`
+	- `ADMIN_PASSWORD`
+
+Only authenticated admin users can access `/admin`. Middleware blocks public access.
+
+## Admin 2FA (Email OTP + Authenticator)
+
+Admin login now supports two-factor authentication.
+
+- Set `ADMIN_2FA_REQUIRED=true` to enforce OTP.
+- Use `Send OTP to Admin Email` button on `/login` to receive email OTP.
+- Optionally set `ADMIN_TOTP_SECRET` to accept authenticator app codes as well.
+
+When both are enabled, either valid email OTP or authenticator code can complete login.
 
 ## Docker (Single Container)
 
@@ -127,6 +168,20 @@ Build only:
 - `SMTP_FROM`
 - `NOTIFY_EMAIL` (default: `reachsatselva@gmail.com`)
 
+### Required for Database + Admin Authentication
+
+- `DATABASE_URL`
+- `AUTH_SECRET`
+- `ADMIN_USERNAME`
+- `ADMIN_PASSWORD`
+- `ADMIN_EMAIL` (optional but recommended)
+
+### Admin 2FA Variables
+
+- `ADMIN_2FA_REQUIRED` (`true`/`false`)
+- `ADMIN_OTP_TTL_MINUTES` (default `10`)
+- `ADMIN_TOTP_SECRET` (optional for authenticator apps)
+
 ### Optional for SMS Notifications (Twilio)
 
 - `TWILIO_ACCOUNT_SID`
@@ -134,7 +189,13 @@ Build only:
 - `TWILIO_FROM_NUMBER`
 - `NOTIFY_PHONE` (default: `+919363616263`)
 
+### Optional for Telegram Notifications (Free Mobile Alerts)
+
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
+
 If email and Twilio are both configured, form submissions send both email and SMS.
+If Telegram is configured, notifications are also pushed to Telegram.
 
 ## Deployment on Another Machine
 

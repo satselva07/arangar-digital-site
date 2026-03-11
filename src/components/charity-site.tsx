@@ -357,6 +357,7 @@ export default function CharitySite() {
 
   const handleBookingSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const form = event.currentTarget;
 
     if (isStaticMode) {
       setBookingStatus("error");
@@ -365,7 +366,7 @@ export default function CharitySite() {
 
     setBookingStatus("submitting");
 
-    const formData = new FormData(event.currentTarget);
+    const formData = new FormData(form);
     const payload = {
       name: String(formData.get("name") ?? ""),
       phone: String(formData.get("phone") ?? ""),
@@ -389,7 +390,7 @@ export default function CharitySite() {
       }
 
       setBookingStatus("success");
-      event.currentTarget.reset();
+      form.reset();
     } catch {
       setBookingStatus("error");
     }
@@ -397,6 +398,7 @@ export default function CharitySite() {
 
   const handleFeedbackSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const form = event.currentTarget;
 
     if (isStaticMode) {
       setFeedbackStatus("error");
@@ -405,7 +407,7 @@ export default function CharitySite() {
 
     setFeedbackStatus("submitting");
 
-    const formData = new FormData(event.currentTarget);
+    const formData = new FormData(form);
     const payload = {
       name: String(formData.get("name") ?? ""),
       feedback: String(formData.get("feedback") ?? ""),
@@ -427,7 +429,7 @@ export default function CharitySite() {
       }
 
       setFeedbackStatus("success");
-      event.currentTarget.reset();
+      form.reset();
     } catch {
       setFeedbackStatus("error");
     }
